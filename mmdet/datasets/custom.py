@@ -75,6 +75,7 @@ class CustomDataset(Dataset):
         self.test_mode = test_mode
         self.filter_empty_gt = filter_empty_gt
         self.file_client = mmcv.FileClient(**file_client_args)
+        # import pdb; pdb.set_trace()
         self.CLASSES = self.get_classes(classes)
 
         # join paths if data_root is specified

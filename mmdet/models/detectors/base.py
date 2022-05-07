@@ -122,7 +122,7 @@ class BaseDetector(BaseModule, metaclass=ABCMeta):
         for var, name in [(imgs, 'imgs'), (img_metas, 'img_metas')]:
             if not isinstance(var, list):
                 raise TypeError(f'{name} must be a list, but got {type(var)}')
-
+        # import pdb; pdb.set_trace()
         num_augs = len(imgs)
         if num_augs != len(img_metas):
             raise ValueError(f'num of augmentations ({len(imgs)}) '
@@ -245,6 +245,7 @@ class BaseDetector(BaseModule, metaclass=ABCMeta):
                   DDP, it means the batch size on each GPU), which is used for
                   averaging the logs.
         """
+        # import pdb; pdb.set_trace()
         losses = self(**data)
         loss, log_vars = self._parse_losses(losses)
 
@@ -334,7 +335,8 @@ class BaseDetector(BaseModule, metaclass=ABCMeta):
         # if out_file specified, do not show image in window
         if out_file is not None:
             show = False
-        # draw bounding boxes
+        # draw bounding 
+        # self.CLASSES = ('cat', 'dog', 'pig', 'rabbit', 'parrot', 'snake', 'tiger', 'seal', 'panda', 'mouse', 'hamster', 'motocycle', 'car','sports_car', 'bicycle', 'phone', 'baby', 'Ultraman', 'skateboard', 'high_heels')
         img = imshow_det_bboxes(
             img,
             bboxes,

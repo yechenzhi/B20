@@ -5,11 +5,13 @@ import torch.nn.functional as F
 from mmcv.runner import BaseModule, auto_fp16, force_fp32
 from torch.nn.modules.utils import _pair
 
-from mmdet.core import build_bbox_coder, multi_apply, multiclass_nms
+from mmdet.core import build_bbox_coder, multi_apply, multiclass_nms,multiclass_nms_c1
 from mmdet.models.builder import HEADS, build_loss
 from mmdet.models.losses import accuracy
 from mmdet.models.utils import build_linear_layer
 
+import clip 
+import numpy as np
 
 @HEADS.register_module()
 class BBoxHead(BaseModule):
@@ -92,6 +94,10 @@ class BBoxHead(BaseModule):
                     dict(
                         type='Normal', std=0.001, override=dict(name='fc_reg'))
                 ]
+        
+        self.model, _ = clip.load("ViT-B/32", device='cuda')
+        self.txt_embs = torch.tensor(np.load('/home/yechenzhi/.jupyter/B20/mmdetection/weights/c21.npy'),dtype=torch.float32).cuda()
+        # self.txt_embs = torch.tensor(np.load('/home/yechenzhi/.jupyter/B20/mmdetection/weights/emb_c9.npy'),dtype=torch.float32).T.cuda()
 
     @property
     def custom_cls_channels(self):
@@ -347,6 +353,7 @@ class BBoxHead(BaseModule):
         """
 
         # some loss (Seesaw loss..) may have custom activation
+        # import pdb; pdb.set_trace()
         if self.custom_cls_channels:
             scores = self.loss_cls.get_activation(cls_score)
         else:
@@ -367,11 +374,142 @@ class BBoxHead(BaseModule):
             scale_factor = bboxes.new_tensor(scale_factor)
             bboxes = (bboxes.view(bboxes.size(0), -1, 4) / scale_factor).view(
                 bboxes.size()[0], -1)
-
+        # import pdb; pdb.set_trace()
         if cfg is None:
             return bboxes, scores
         else:
             det_bboxes, det_labels = multiclass_nms(bboxes, scores,
+                                                    cfg.score_thr, cfg.nms,
+                                                    cfg.max_per_img)
+
+            return det_bboxes, det_labels
+
+    @force_fp32(apply_to=('cls_score', 'bbox_pred'))
+    def get_clip_bboxes(self,
+                   img,
+                   img_metas,
+                   proposals,
+                   rois,
+                   cls_score,
+                   bbox_pred,
+                   img_shape,
+                   scale_factor,
+                   rescale=False,
+                   cfg=None):
+
+        # some loss (Seesaw loss..) may have custom activation
+        # import pdb; pdb.set_trace()
+        if self.custom_cls_channels:
+            scores = self.loss_cls.get_activation(cls_score)
+        else:
+            scores = F.softmax(
+                cls_score, dim=-1) if cls_score is not None else None
+            # scores = cls_score
+        objectness = 1 - scores[:,-1]
+        objectness = objectness.repeat(21,1).T
+        # bbox_pred would be None in some detector when with_reg is False,
+        # e.g. Grid R-CNN.
+        if bbox_pred is not None:
+            bboxes = self.bbox_coder.decode(
+                rois[..., 1:], bbox_pred, max_shape=img_shape)
+        else:
+            bboxes = rois[:, 1:].clone()
+            if img_shape is not None:
+                bboxes[:, [0, 2]].clamp_(min=0, max=img_shape[1])
+                bboxes[:, [1, 3]].clamp_(min=0, max=img_shape[0])
+
+        if rescale and bboxes.size(0) > 0:
+            scale_factor = bboxes.new_tensor(scale_factor)
+            bboxes = (bboxes.view(bboxes.size(0), -1, 4) / scale_factor).view(
+                bboxes.size()[0], -1)
+
+        
+        ####beigin fg-bg nms#####
+        # fg_scores = proposals[:, 4].contiguous()
+        # fg_scores = scores[:,0].contiguous()
+        # bboxes = bboxes.contiguous()
+        # import pdb; pdb.set_trace()
+        # valid_mask = scores[:,0] > 0.05
+        # bboxes = bboxes[valid_mask]
+        # scores = scores[valid_mask]
+        from mmcv import ops
+        from mmcv.ops import nms
+        from mmdet.core import bbox2roi
+        import clip 
+        # dets, inds = nms(bboxes, fg_scores, iou_threshold=0.5)
+        # import pdb; pdb.set_trace()
+
+        # bboxes = bboxes[inds]
+        bbox_rois = bbox2roi([bboxes])
+        # import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
+        if bboxes.numel() > 0:
+            with torch.no_grad():
+                align = getattr(ops,'RoIAlign')(output_size=224)
+                cropped_img = align(img, bbox_rois)
+                embs = self.model.encode_image(cropped_img).float()
+                embs = torch.div(embs,torch.norm(embs,p=2, dim=-1,keepdim=True))
+            # import pdb; pdb.set_trace()
+            # txt_embs = torch.div(self.txt_embs,torch.norm(self.txt_embs,p=2,dim=0,keepdim=True))
+            clip_scores = torch.mm(embs, self.txt_embs)/0.01
+            # import pdb; pdb.set_trace()
+            clip_scores = F.softmax(clip_scores, dim=-1)
+
+            # scores = torch.sqrt(torch.mul(scores,clip_scores))
+            # scores = (scores + clip_scores)/2
+            # import pdb; pdb.set_trace()
+            #对与仅有一类的前景检测器
+            # scores_fg = scores[:,0].repeat((20,1)).T
+            # scores_bg = torch.unsqueeze(scores[:,1],1)
+            # scores = torch.cat((scores_fg,scores_bg),dim=1)
+            # scores = torch.sqrt(torch.mul(scores,clip_scores))
+            # clip_scores[:,-1] = scores[:,1]
+
+            # scores = clip_scores
+        
+        # import pdb; pdb.set_trace()
+        # scores_fg = scores[:,0].repeat((20,1)).T
+        # scores_bg = torch.unsqueeze(scores[:,1],1)
+        # scores = torch.cat((scores_fg,scores_bg),dim=1)
+
+        # scores = torch.sqrt(torch.mul(scores,clip_scores))
+        # model = self.model
+        # txt_embs = self.txt_embs[:,:20]
+        # objectness = 1 - scores[:,-1]
+        scores = torch.sqrt(torch.mul(clip_scores,objectness))
+
+        # import pdb; pdb.set_trace()
+        ################################
+        #extract bboxes and embs for knowledge distilation
+        import random
+        import os
+        # import pdb;pdb.set_trace()
+
+        
+
+
+        # index = random.sample(range(len(bboxes)),300)
+        # # print(bboxes.shape)
+        # bboxes_ = bboxes[index]
+        # embs_ = embs[index]
+
+        # file = img_metas['filename'].split('/')[-1].split('.')[0]+'.npy'
+        # dic = {}
+        # dic.update(bboxes=bboxes_.cpu().numpy(),embs=embs_.cpu().numpy())
+
+        # root = '/home/yechenzhi/.jupyter/B20/mmdetection/weights/bbox_embs_from_c7'
+        # file = os.path.join(root,file)
+        # np.save(file,dic)
+
+
+        ################################
+        # objectness = objectness.repeat(9,1).T
+        # import pdb; pdb.set_trace()
+        # scores = torch.sqrt(torch.mul(objectness,clip_scores))
+        if cfg is None:
+            return bboxes, scores
+        else:
+            det_bboxes, det_labels = multiclass_nms(bboxes, scores, 
                                                     cfg.score_thr, cfg.nms,
                                                     cfg.max_per_img)
 

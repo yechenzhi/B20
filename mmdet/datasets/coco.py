@@ -68,7 +68,7 @@ class CocoDataset(CustomDataset):
         Returns:
             list[dict]: Annotation info from COCO api.
         """
-
+        # import pdb; pdb.set_trace()
         self.coco = COCO(ann_file)
         # The order of returned `cat_ids` will not
         # change with the order of the CLASSES
@@ -389,7 +389,7 @@ class CocoDataset(CustomDataset):
                           coco_gt,
                           metrics,
                           logger=None,
-                          classwise=False,
+                          classwise=True,
                           proposal_nums=(100, 300, 1000),
                           iou_thrs=None,
                           metric_items=None):
@@ -424,7 +424,9 @@ class CocoDataset(CustomDataset):
         Returns:
             dict[str, float]: COCO style evaluation metric.
         """
+        # import pdb; pdb.set_trace()
         if iou_thrs is None:
+            # iou_thrs = [0.5]
             iou_thrs = np.linspace(
                 .5, 0.95, int(np.round((0.95 - .5) / .05)) + 1, endpoint=True)
         if metric_items is not None:
@@ -637,7 +639,7 @@ class CocoDataset(CustomDataset):
 
         coco_gt = self.coco
         self.cat_ids = coco_gt.get_cat_ids(cat_names=self.CLASSES)
-
+        # import pdb; pdb.set_trace()
         result_files, tmp_dir = self.format_results(results, jsonfile_prefix)
         eval_results = self.evaluate_det_segm(results, result_files, coco_gt,
                                               metrics, logger, classwise,

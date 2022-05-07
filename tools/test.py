@@ -227,11 +227,14 @@ def main():
         model.CLASSES = checkpoint['meta']['CLASSES']
     else:
         model.CLASSES = dataset.CLASSES
+    model.CLASSES = dataset.CLASSES
+    # import pdb; pdb.set_trace()
 
     if not distributed:
         model = MMDataParallel(model, device_ids=cfg.gpu_ids)
         outputs = single_gpu_test(model, data_loader, args.show, args.show_dir,
                                   args.show_score_thr)
+        # import pdb; pdb.set_trace()
     else:
         model = MMDistributedDataParallel(
             model.cuda(),

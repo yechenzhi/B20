@@ -135,6 +135,7 @@ def draw_labels(ax,
     Returns:
         matplotlib.Axes: The result axes.
     """
+    # import pdb; pdb.set_trace()
     for i, (pos, label) in enumerate(zip(positions, labels)):
         label_text = class_names[
             label] if class_names is not None else f'class {label}'

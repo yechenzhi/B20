@@ -44,21 +44,21 @@ data = dict(
         type=dataset_type,
         # explicitly add your class names to the field `classes`
         classes=classes,
-        ann_file=data_root + 'annotations/trainB20v4.json',
+        ann_file=data_root + 'annotations/trainB20.json',
         img_prefix=data_root + 'trainB20/',
         pipeline=train_pipeline),
     val=dict(
         type=dataset_type,
         # explicitly add your class names to the field `classes`
         classes=classes,
-        ann_file=data_root + 'annotations/valB20v4.json',
+        ann_file=data_root + 'annotations/valB20.json',
         img_prefix=data_root + 'valB20/',
         pipeline=test_pipeline),
     test=dict(
         type=dataset_type,
         # explicitly add your class names to the field `classes`
         classes=classes,
-        ann_file=data_root + 'annotations/valB20v4.json',
+        ann_file=data_root + 'annotations/valB20.json',
         img_prefix=data_root + 'valB20/',
         pipeline=test_pipeline))
 

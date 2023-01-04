@@ -8,5 +8,5 @@ B20数据集来源于B站视频，经过人工标注后，用于评测开放世�
 
 ## 代码
 
-代码均在 code 文件夹下，代码采用 mmdetection 框架，具体安装和使用可参考[mmdetection](https://github.com/open-mmlab/mmdetection)，其中主要训练和评估的config文件在 code/configs/B20 文件夹下。
+代码均在 code 文件夹下，代码基于 mmdetection 框架，具体安装和使用可参考[mmdetection](https://github.com/open-mmlab/mmdetection)，其中主要训练和评估的config文件在 code/configs/B20 文件夹下。
 

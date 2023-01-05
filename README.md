@@ -17,9 +17,9 @@ B20数据集来源于B站视频，经过人工标注后，用于评测开放世�
 
 | 数据集         | 类别数  |  视频片段数 | 特点 |
 | :--             | --:     | --:   |:--   |
-| [VID](https://image-net.org/challenges/LSVRC/2017/#vid)          | 30  |  4,237|  类别为imagenet子类 |
-| [YTBB](https://research.google.com/youtube-bb/explore.html)       | 23  | 380,000 |视频均为一个显著物体 |
-| [EPIC KITCHEN](https://epic-kitchens.github.io/2022)  | 290     | 89,977 | 场景为厨房  |
+| [VID](https://image-net.org/challenges/LSVRC/2017/#vid)          | 30  |  4,237|  物体大小经过挑选、视频内容较整洁 |
+| [YTBB](https://research.google.com/youtube-bb/explore.html)       | 23  | 380,000 |绝大部分视频内容仅一个显著物体 |
+| [EPIC KITCHEN](https://epic-kitchens.github.io/2022)  | 290     | 89,977 | 仅厨房场景  |
 | **B20** | 20   | 1,270 | 来自B站用户拍摄上传的视频 |
 
 

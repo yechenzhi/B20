@@ -6,9 +6,9 @@ B20数据集来源于B站视频，经过人工标注后，用于评测开放世�
 
 ## 亮点
 
-+ 超过1200个来自[B站](https://www.bilibili.com/)由用户自行上传的真实世界的视频；
++ 超过1200个来自[B站](https://www.bilibili.com/)用户上传的多样视频；
 + 20个类别的目标检测框标注, 包括 *cat*, *dog*, *pig*, *rabbit*, *parrot*, *snake*, *tiger*, *seal*, *panda*, *mouse*, *hamster*, *motorcycle*, *car*, *sports car*, *bicycle*, *phone*, *baby*, *Ultraman*, *skateboard*, *high-heels*；
-+ 超过4000个物体级别的由多人校验得到的检测框标注；
++ 超过4000个经过多人校验得到的目标检测框标注；
 + 具备真实世界目标检测难点：像素低，运动模糊，遮挡，不同域等。
 
 ![examples](B20HARD.png)
